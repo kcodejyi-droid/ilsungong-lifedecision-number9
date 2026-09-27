@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>내일 연차 쓸까, 아니면 일단 기어갈까?</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Gowun+Dodum&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<style>
+  :root {
+    --bg: #FFFFFF;
+    --surface: #F8FBFA;
+    --surface-line: #DCE8E4;
+    --text: #1C2422;
+    --text-muted: #79877F;
+    --green: #1C8C5C;
+    --green-soft: #DEF5EA;
+    --yellow: #E08900;
+    --yellow-soft: #FFF0D6;
+    --red: #E5484D;
+    --red-soft: #FCE2E3;
+    --accent: #2F8F82;
+    --accent-soft: #DEF3F0;
+    --shadow: 0 18px 40px -22px rgba(28,36,34,0.35);
+    --radius: 22px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #121917;
+      --surface: #1B2320;
+      --surface-line: #313D39;
+      --text: #EAF2EF;
+      --text-muted: #A3B3AD;
+      --green-soft: #163A2C;
+      --yellow-soft: #3A2E14;
+      --red-soft: #402024;
+      --accent-soft: #1A3733;
+      --shadow: 0 18px 40px -18px rgba(0,0,0,0.6);
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #121917;
+    --surface: #1B2320;
+    --surface-line: #313D39;
+    --text: #EAF2EF;
+    --text-muted: #A3B3AD;
+    --green-soft: #163A2C;
+    --yellow-soft: #3A2E14;
+    --red-soft: #402024;
+    --accent-soft: #1A3733;
+    --shadow: 0 18px 40px -18px rgba(0,0,0,0.6);
+  }
+
+  * { box-sizing: border-box; }
+  html { scroll-padding-top: env(safe-area-inset-top, 0px); }
+  html, body { height: 100%; margin: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Gowun Dodum', sans-serif;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    -webkit-tap-highlight-color: transparent;
+  }
+  .wrap {
+    max-width: 480px; margin: 0 auto; padding: 28px 20px 48px;
+    min-height: 100%; display: flex; flex-direction: column;
+  }
+  .brand {
+    display: flex; align-items: baseline; gap: 8px; margin-bottom: 22px;
+    color: var(--text-muted); font-size: 13px; letter-spacing: 0.02em;
+  }
+  .brand b { color: var(--text); font-family: 'Black Han Sans', sans-serif; font-size: 15px; }
+
+  .screen { display: none; flex: 1; flex-direction: column; }
+  .screen.active { display: flex; }
+
+  .receipt {
+    background: var(--surface);
+    border: 1px solid var(--surface-line);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 34px 26px 28px;
+    position: relative;
+  }
+  .receipt::after {
+    content: "";
+    position: absolute; left: 0; right: 0; bottom: -11px; height: 22px;
+    background:
+      linear-gradient(-45deg, var(--bg) 8px, transparent 0),
+      linear-gradient(45deg, var(--bg) 8px, transparent 0);
+    background-size: 16px 22px;
+    background-position: left bottom;
+  }
+  .tag {
+    display: inline-block; font-size: 12px; color: var(--accent);
+    background: var(--accent-soft); padding: 5px 11px; border-radius: 999px;
+    margin-bottom: 14px; font-weight: 700;
+  }
+  h1.title {
+    font-family: 'Black Han Sans', sans-serif; font-weight: 400;
+    font-size: 25px; line-height: 1.45; margin: 0 0 14px;
+  }
+  .desc { color: var(--text-muted); font-size: 15px; line-height: 1.7; margin: 0 0 22px; }
+  .meta-line {
+    display: flex; gap: 14px; font-size: 13px; color: var(--text-muted);
+    border-top: 1px dashed var(--surface-line); padding-top: 16px; font-family: monospace;
+  }
+
+  .cta {
+    margin-top: 26px; width: 100%; border: none; background: var(--text); color: var(--bg);
+    font-family: 'Gowun Dodum', sans-serif; font-weight: 700; font-size: 17px;
+    padding: 17px; border-radius: 16px; cursor: pointer;
+  }
+  .cta:focus-visible, .opt:focus-visible, .ghost-btn:focus-visible {
+    outline: 3px solid var(--accent); outline-offset: 2px;
+  }
+  .cta:active { transform: scale(0.98); }
+
+  .signal-preview { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 22px; }
+  .signal-chip { text-align: center; padding: 12px 4px; border-radius: 12px; font-size: 22px; }
+  .signal-chip span { display: block; font-size: 10.5px; margin-top: 5px; color: var(--text-muted); line-height: 1.4; }
+
+  .progress-row { display: flex; align-items: center; gap: 10px; margin-bottom: 22px; }
+  .progress-track { flex: 1; height: 6px; background: var(--surface-line); border-radius: 999px; overflow: hidden; }
+  .progress-fill { height: 100%; background: var(--accent); border-radius: 999px; transition: width .35s ease; }
+  .q-count { font-family: monospace; font-size: 13px; color: var(--text-muted); white-space: nowrap; }
+  .q-text {
+    font-family: 'Black Han Sans', sans-serif; font-weight: 400; font-size: 19px;
+    line-height: 1.5; margin: 4px 0 24px;
+  }
+  .options { display: flex; flex-direction: column; gap: 11px; }
+  .opt {
+    text-align: left; background: var(--surface); border: 1.5px solid var(--surface-line);
+    border-radius: 15px; padding: 16px; font-family: 'Gowun Dodum', sans-serif;
+    font-size: 14.8px; line-height: 1.55; color: var(--text); cursor: pointer;
+    transition: border-color .15s ease, transform .1s ease;
+  }
+  .opt:hover { border-color: var(--accent); }
+  .opt:active { transform: scale(0.985); }
+
+  .back-link {
+    background: none; border: none; color: var(--text-muted);
+    font-family: 'Gowun Dodum', sans-serif; font-size: 13px;
+    padding: 0; margin-top: 20px; cursor: pointer; align-self: flex-start; text-decoration: underline;
+  }
+
+  .result-emoji { font-size: 54px; line-height: 1; margin-bottom: 10px; }
+  .result-kicker { color: var(--text-muted); font-size: 13px; margin-bottom: 6px; font-family: monospace; }
+  .result-title {
+    font-family: 'Black Han Sans', sans-serif; font-weight: 400; font-size: 24px; margin: 0 0 10px;
+  }
+  .result-line { font-size: 16px; font-weight: 700; margin-bottom: 16px; }
+  .result-body {
+    font-size: 15px; line-height: 1.75; color: var(--text-muted); margin-bottom: 26px;
+    background: var(--bg); border: 1px dashed var(--surface-line); border-radius: 12px; padding: 14px;
+  }
+
+  .gauge { margin-bottom: 8px; }
+  .gauge-track {
+    position: relative; height: 14px; border-radius: 999px; overflow: visible;
+    background: linear-gradient(to right,
+      var(--green) 0%, var(--green) 31.25%,
+      var(--yellow) 31.25%, var(--yellow) 64.5%,
+      var(--red) 64.5%, var(--red) 100%);
+  }
+  .gauge-marker {
+    position: absolute; top: 50%; width: 20px; height: 20px; border-radius: 50%;
+    background: var(--surface); border: 3px solid var(--text);
+    transform: translate(-50%, -50%); box-shadow: 0 2px 6px rgba(0,0,0,0.25);
+  }
+  .gauge-labels {
+    display: flex; justify-content: space-between; font-size: 11px; color: var(--text-muted);
+    margin-top: 8px; font-family: monospace;
+  }
+
+  .btn-row { display: flex; gap: 10px; margin-top: 22px; }
+  .ghost-btn {
+    flex: 1; padding: 15px; border-radius: 14px; border: 1.5px solid var(--surface-line);
+    background: transparent; color: var(--text); font-family: 'Gowun Dodum', sans-serif;
+    font-weight: 700; font-size: 14.5px; cursor: pointer;
+  }
+  .ghost-btn.primary { background: var(--text); color: var(--bg); border-color: var(--text); }
+
+  .toast {
+    position: fixed; left: 50%; bottom: calc(28px + env(safe-area-inset-bottom, 0px));
+    transform: translateX(-50%) translateY(10px);
+    background: var(--text); color: var(--bg); padding: 11px 18px; border-radius: 999px;
+    font-size: 13.5px; opacity: 0; pointer-events: none; transition: opacity .2s ease, transform .2s ease;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="brand"><b>연차 결정 신호등</b> · 8문항</div>
+
+  <!-- 인트로 -->
+  <section class="screen active" id="screen-intro">
+    <div class="receipt">
+      <span class="tag">직장/멘탈 🛌</span>
+      <h1 class="title">내일 연차 쓸까,<br>아니면<br>일단 기어갈까?</h1>
+      <p class="desc">알람을 끄기 전, 8가지 질문으로 지금 내 상태와 상황을 냉정하게 판정해드립니다.</p>
+      <div class="meta-line">
+        <span>문항 08</span><span>·</span><span>약 2분</span><span>·</span><span>판정 3단계</span>
+      </div>
+    </div>
+
+    <div class="signal-preview">
+      <div class="signal-chip" style="background:var(--green-soft)">🟢<span>연차 즉시 승인</span></div>
+      <div class="signal-chip" style="background:var(--yellow-soft)">🟡<span>오전 반차</span></div>
+      <div class="signal-chip" style="background:var(--red-soft)">🔴<span>강제 출근</span></div>
+    </div>
+
+    <button class="cta" id="btn-start">판정 시작하기</button>
+  </section>
+
+  <!-- 퀴즈 -->
+  <section class="screen" id="screen-quiz">
+    <div class="progress-row">
+      <div class="progress-track"><div class="progress-fill" id="progress-fill"></div></div>
+      <div class="q-count" id="q-count">Q1/8</div>
+    </div>
+    <p class="q-text" id="q-text"></p>
+    <div class="options" id="options"></div>
+    <button class="back-link" id="btn-back">← 이전 질문</button>
+  </section>
+
+  <!-- 결과 -->
+  <section class="screen" id="screen-result">
+    <div class="receipt" id="result-card" style="margin-bottom:0;">
+      <div class="result-emoji" id="result-emoji"></div>
+      <div class="result-kicker" id="result-kicker"></div>
+      <h2 class="result-title" id="result-title"></h2>
+      <p class="result-line" id="result-line"></p>
+
+      <div class="gauge">
+        <div class="gauge-track">
+          <div class="gauge-marker" id="gauge-marker"></div>
+        </div>
+        <div class="gauge-labels"><span>연차 승인</span><span>오전 반차</span><span>강제 출근</span></div>
+      </div>
+
+      <p class="result-body" id="result-body"></p>
+    </div>
+    <div class="btn-row">
+      <button class="ghost-btn" id="btn-retry">다시 진단하기</button>
+      <button class="ghost-btn primary" id="btn-save-image">결과 이미지 저장</button>
+    </div>
+  </section>
+</div>
+
+<div class="toast" id="toast">저장됐어요</div>
+
+<script>
+(function () {
+  const VERDICTS = [
+    { min: 8, max: 15, emoji: '🟢', name: '연차 즉시 승인', color: 'var(--green)',
+      line: '내 몸과 멘탈이 먼저다! 당장 연차 결재 올리세요.',
+      body: '1초도 고민하지 말고 아침 알람을 끄고 내일은 오직 나를 위한 휴식을 즐기세요. 회사는 당신 없이도 잘 돌아갑니다!' },
+    { min: 16, max: 23, emoji: '🟡', name: '오전 반차 또는 유연근무 전환', color: 'var(--yellow)',
+      line: '전체 휴가는 과하고, 오전만이라도 숨을 골라봅시다.',
+      body: '풀연차가 부담스럽다면 \'오전 반차\'를 쓰거나 출근 시간을 살짝 조정해 멘탈을 보호하고 출근하세요.' },
+    { min: 24, max: 32, emoji: '🔴', name: '강제 출근 및 영혼 탑승', color: 'var(--red)',
+      line: 'STOP! 내일은 무사히 기어갈 수 있습니다. 출근합시다.',
+      body: '지금은 도망칠 때가 아닙니다. 내일 일정을 무사히 소화하고 퇴근길에 맛있는 보상으로 자신을 위로해 주세요!' },
+  ];
+
+  // w 값은 문항 위치(①②③④)가 아니라 실제 내용 논리에 맞춰 재배정한 정답 가중치입니다.
+  const QUESTIONS = [
+    { q: '내일 회사에 반드시 내가 없으면 돌아가지 않는 \'핵심 일정\'이 잡혀 있나요?', opts: [
+      { w:4, text:'대체 불가능한 내 주도 하의 핵심 일정이 있어서 출근 외에는 답이 없다.' },
+      { w:3, text:'내 이름이 걸려 있긴 하지만, 동료의 도움을 받으면 어떻게든 수습 가능하다.' },
+      { w:2, text:'내가 빠져도 팀원들이 충분히 커버할 수 있는 마이너한 일정뿐이다.' },
+      { w:1, text:'내일은 나 혼자만의 평화로운 개인 작업일이라 누가 없어도 아무도 모른다.' },
+    ]},
+    { q: '지금 나의 누적 피로도와 멘탈 상태를 솔직히 평가한다면?', opts: [
+      { w:1, text:'멘탈과 육체가 분리되기 직전! 내일 출근하면 영혼이 탈곡될 게 뻔하다.' },
+      { w:2, text:'이번 주는 체력적으로 고비였고, 극심한 주중 피로가 몰려온다.' },
+      { w:3, text:'평소와 비슷한 수준의 피로감이라 버틸 만하다.' },
+      { w:4, text:'주말이나 최근 휴식 덕분에 컨디션이 아주 쾌적하고 상쾌하다.' },
+    ]},
+    { q: '만약 내일 갑자기 연차를 쓰겠다고 선언했을 때, 팀 내 눈치나 압박감은 어느 정도인가요?', opts: [
+      { w:4, text:'팀 상사나 분위기상 연차 쓰기가 사형선고 수준으로 불가능에 가깝다.' },
+      { w:3, text:'눈치는 살짝 보이지만, 내 몸이 먼저라 쓸 수는 있다.' },
+      { w:2, text:'다들 각자 일하느라 바빠서 내가 쉬든 말든 크게 신경 쓰지 않는 분위기다.' },
+      { w:1, text:'이미 팀 내에 연차 사용 문화가 자유롭고 대체 인력도 완벽히 세팅되어 있다.' },
+    ]},
+    { q: '내일 출근을 강행했을 때, 하루 종일 버텨낼 수 있는 \'정신적/물리적 비상 연료\'가 남아 있나요?', opts: [
+      { w:1, text:'바닥을 친 지 오래다. 오전 10시만 되어도 눈이 풀릴 것 같다.' },
+      { w:2, text:'간신히 숨만 붙어 있는 상태로 커피 카페인으로 버텨야 한다.' },
+      { w:3, text:'꾸역꾸역 일은 할 수 있겠지만 하루가 지옥같이 길 것 같다.' },
+      { w:4, text:'퇴근 후 맛있는 것을 먹을 생각으로 가볍게 버텨낼 수 있다.' },
+    ]},
+    { q: '오늘 밤 잠들기 전, 내일 출근을 생각할 때 나의 심박수와 감정 상태는?', opts: [
+      { w:1, text:'출근 생각만 해도 가슴이 답답하고 숨이 막히는 극도의 회피 감정 발생.' },
+      { w:2, text:'"아... 출근하기 싫다"를 10번쯤 속으로 외치며 침대에서 뒹구는 중.' },
+      { w:3, text:'가기 싫은 건 직장인 디폴트값이지 뭐, 하며 담담하게 받아들이는 중.' },
+      { w:4, text:'내일 점심에 뭐 먹을지 고민할 정도로 평온하고 무덤덤하다.' },
+    ]},
+    { q: '이번 달 내 남은 연차 개수와 앞으로의 일정을 고려했을 때의 여유는?', opts: [
+      { w:4, text:'남은 연차가 털끝만큼도 없어서 쓰려면 무급을 각오하거나 눈치가 극심하다.' },
+      { w:3, text:'연차가 간당간당해서 꼭 필요한 순간을 위해 아껴두어야 한다.' },
+      { w:2, text:'여유는 적당히 있는 편이라 이번에 써도 큰 타격은 없다.' },
+      { w:1, text:'넉넉하게 남아도는 연차 덕분에 언제든 쓸 수 있는 자유의 몸이다.' },
+    ]},
+    { q: '오늘 밤 혹은 내일 오전에 처리해야 할 개인적인 볼일이나 \'특단의 목적\'이 있나요?', opts: [
+      { w:1, text:'병원 진료, 관공서 업무, 혹은 극심한 번아웃 치유를 위한 확실한 목적이 있다.' },
+      { w:2, text:'딱히 큰 볼일은 없지만, 그냥 침대와 혼연일체가 되어 뒹굴고 싶다.' },
+      { w:3, text:'집안일이나 소소한 개인 정리가 밀려 있긴 하다.' },
+      { w:4, text:'특별한 목적 없이 그냥 도망치고 싶은 마음에 가깝다.' },
+    ]},
+    { q: '만약 내일 출근해서 하루를 무사히 마치고 퇴근할 때의 내 모습을 상상해 보면?', opts: [
+      { w:4, text:'"오늘 안 쉬고 기어 나오길 정말 잘했다!"라며 뿌듯해할 것이다.' },
+      { w:3, text:'"아이고 힘들었다..." 하며 영혼은 털렸지만 무사히 살아남은 것에 안도할 것이다.' },
+      { w:2, text:'"차라리 연차 쓸 걸 그랬나" 하며 후회와 짜증이 밀려올 것이다.' },
+      { w:1, text:'내일 퇴근길 기억은 없고, 그냥 집에 가자마자 기절할 것이다.' },
+    ]},
+  ];
+
+  let current = 0;
+  let answers = []; // weight numbers
+  let shuffledCache = [];
+  let activeQuestions = QUESTIONS;
+
+  const screens = {
+    intro: document.getElementById('screen-intro'),
+    quiz: document.getElementById('screen-quiz'),
+    result: document.getElementById('screen-result'),
+  };
+  function show(name) {
+    Object.values(screens).forEach(s => s.classList.remove('active'));
+    screens[name].classList.add('active');
+    window.scrollTo(0, 0);
+  }
+
+  function shuffle(arr) {
+    const a = arr.slice();
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  }
+
+  function renderQuestion() {
+    const qData = activeQuestions[current];
+    document.getElementById('q-count').textContent = 'Q' + (current + 1) + '/' + activeQuestions.length;
+    document.getElementById('progress-fill').style.width = ((current) / activeQuestions.length * 100) + '%';
+    document.getElementById('q-text').textContent = qData.q;
+    document.getElementById('btn-back').style.visibility = current === 0 ? 'hidden' : 'visible';
+
+    if (!shuffledCache[current]) {
+      shuffledCache[current] = shuffle(qData.opts);
+    }
+    const opts = shuffledCache[current];
+
+    const wrap = document.getElementById('options');
+    wrap.innerHTML = '';
+    opts.forEach(o => {
+      const btn = document.createElement('button');
+      btn.className = 'opt';
+      btn.type = 'button';
+      btn.textContent = o.text;
+      btn.addEventListener('click', () => selectAnswer(o.w));
+      wrap.appendChild(btn);
+    });
+  }
+
+  function selectAnswer(weight) {
+    answers[current] = weight;
+    current += 1;
+    if (current >= activeQuestions.length) {
+      document.getElementById('progress-fill').style.width = '100%';
+      setTimeout(showResult, 150);
+    } else {
+      renderQuestion();
+    }
+  }
+
+  document.getElementById('btn-back').addEventListener('click', () => {
+    if (current > 0) {
+      current -= 1;
+      renderQuestion();
+    }
+  });
+
+  document.getElementById('btn-start').addEventListener('click', () => {
+    current = 0;
+    answers = [];
+    shuffledCache = [];
+    activeQuestions = shuffle(QUESTIONS);
+    show('quiz');
+    renderQuestion();
+  });
+
+  document.getElementById('btn-retry').addEventListener('click', () => {
+    current = 0;
+    answers = [];
+    shuffledCache = [];
+    show('intro');
+  });
+
+  function showResult() {
+    const total = answers.reduce((sum, w) => sum + w, 0);
+    const verdict = VERDICTS.find(v => total >= v.min && total <= v.max) || VERDICTS[1];
+
+    document.getElementById('result-emoji').textContent = verdict.emoji;
+    document.getElementById('result-kicker').textContent = '총점 ' + total + ' / 32';
+    document.getElementById('result-title').textContent = verdict.name;
+    document.getElementById('result-title').style.color = verdict.color;
+    document.getElementById('result-line').textContent = verdict.line;
+    document.getElementById('result-body').textContent = verdict.body;
+
+    const minScore = 8, maxScore = 32;
+    const pct = ((total - minScore) / (maxScore - minScore)) * 100;
+    document.getElementById('gauge-marker').style.left = pct + '%';
+
+    show('result');
+  }
+
+  function showToast(msg) {
+    const toast = document.getElementById('toast');
+    toast.textContent = msg;
+    toast.classList.add('show');
+    setTimeout(() => toast.classList.remove('show'), 2600);
+  }
+
+  document.getElementById('btn-save-image').addEventListener('click', async () => {
+    const node = document.getElementById('result-card');
+    if (typeof html2canvas === 'undefined') {
+      showToast('이미지 생성 기능을 불러오지 못했어요. 잠시 후 다시 시도해주세요');
+      return;
+    }
+    try {
+      const bgColor = getComputedStyle(document.body).backgroundColor || '#ffffff';
+      const canvas = await html2canvas(node, { scale: 2, backgroundColor: bgColor, useCORS: true });
+      const dataUrl = canvas.toDataURL('image/png');
+      const link = document.createElement('a');
+      link.href = dataUrl;
+      link.download = '연차결정_신호등_결과.png';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      showToast('이미지가 저장됐어요!');
+    } catch (e) {
+      showToast('이미지 저장에 실패했어요');
+    }
+  });
+})();
+</script>
+</body>
+</html>
